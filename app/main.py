@@ -6,12 +6,13 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from loguru import logger
 
-from app.core.config import settings
-from app.core.database import engine, Base
-from app.middleware.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
+from .core.config import settings
+from .core.database import engine, Base
+from .middleware.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
+
 
 # ── Routers ───────────────────────────────────────────────
-from app.routers import auth, users, files, payments, notifications, websockets, admin, ai
+from .routers import auth, users, files, payments, notifications, websockets, admin, ai
 
 # ── Create all DB tables ──────────────────────────────────
 Base.metadata.create_all(bind=engine)
