@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import hashlib, base64, bcrypt
 from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -10,14 +11,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # ── Password utilities ────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    prepared_password = _prepare(password).encode('utf-8')
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(prepared_password, salt)
+    return hashed.decode('utf-8')
 
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    prepared_password = _prepare(plain_password).encode('utf-8')
+    # Bcrypt stores the salt inside the hash, so we verify against the stored string
+    return bcrypt.checkpw(prepared_password, hashed_password.encode('utf-8'))
 
 
 # ── Token utilities ───────────────────────────────────────
+def _prepare(password: str) -> str:
+    # Hash and encode to maintain your current database format
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    prepared = base64.b64encode(digest).decode("utf-8")
+    return prepared
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -30,7 +42,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
