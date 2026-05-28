@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.core.database import get_db
@@ -35,14 +35,27 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return {"user": user, "tokens": create_tokens(user.id)}
 
 
-@router.post("/login", response_model=RegisterResponse)
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == credentials.username).first()
-    if not user or not verify_password(credentials.password, user.password):
+# @router.post("/login", response_model=RegisterResponse)
+# def login(credentials: UserLogin, db: Session = Depends(get_db)):
+#     user = db.query(User).filter(User.username == credentials.username).first()
+#     if not user or not verify_password(credentials.password, user.password):
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+#     if not user.is_active:
+#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+#     return {"user": user, "tokens": create_tokens(user.id)}
+
+@router.post("/login")
+def login(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
-    return {"user": user, "tokens": create_tokens(user.id)}
+    tokens = create_tokens(user.id)
+    return {
+        "access_token": tokens["access_token"],
+        "token_type": "bearer"
+    }
 
 
 @router.post("/refresh", response_model=TokenResponse)
