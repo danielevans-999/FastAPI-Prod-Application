@@ -18,13 +18,13 @@ def create_admin():
             print("Admin user already exists")
             return
         admin = User(
-            username="admin", email="admin@yourdomain.com",
+            username="admin", email="admin@gmail.com",
             first_name="System", last_name="Admin",
-            role="admin", password=hash_password("ChangeMe123!"), is_active=True
+            role="admin", password=hash_password("password@123"), is_active=True
         )
         db.add(admin)
         db.commit()
-        print("Admin created — username: admin  password: ChangeMe123!")
+        print("Admin created — username: admin  password: password@123")
         print("Change the password immediately after first login!")
     finally:
         db.close()
