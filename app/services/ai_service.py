@@ -1,6 +1,6 @@
 from openai import OpenAI
 from fastapi import HTTPException
-from ..config import settings
+from app.core.config import settings
 from ..schemas import AIRequest, AIResponse
 import logging
 
